@@ -45,4 +45,4 @@ class SiftDetector(FeatureDetector):
             raise AttributeError("The image has not been set")
         else:
             sift = cv2.SIFT_create()
-            kp = sift.detect(self.image, None)
+            return sift.detect(self.image, None)
