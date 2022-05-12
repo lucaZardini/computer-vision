@@ -1,7 +1,8 @@
+from manager import TrackManager
 
 
 def main():
-    pass
+    TrackManager.track_video("video")
 
 
 if __name__ == "__main__":
