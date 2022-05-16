@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import cv2
+
 
 class FeatureTrackingAlgorithm(Enum):
-    pass
+    KALMAN_FILTER = "kalman_filter"
 
 
 class FeatureTracking(ABC):
@@ -13,3 +15,12 @@ class FeatureTracking(ABC):
     @abstractmethod
     def track(self, algorithm: FeatureTrackingAlgorithm):
         pass
+
+
+
+class KalmanFilter(FeatureTracking):
+
+    def track(self, algorithm: FeatureTrackingAlgorithm = FeatureTrackingAlgorithm.KALMAN_FILTER):
+        kalman_filter = cv2.KalmanFilter()
+        kalman_filter.predict()
+        kalman_filter.correct()
