@@ -4,6 +4,7 @@ import cv2
 
 from feature_detector.feature_detector import FeatureDetectorAlgorithm, FeatureDetector, FeatureDetectorBuilder, \
     SiftDetector
+from feature_tracking.feature_tracking import KalmanFilter
 
 
 class TrackManager:
@@ -16,14 +17,13 @@ class TrackManager:
         cap = cv2.VideoCapture(video_path)
         sift_detector = SiftDetector()
         kalman_filter = KalmanFilter()
-        n_frames = 0
-        ret = True
         for i in range(1000):
             ret, frame = cap.read()
-            # print(ret)
-            # sift_detector = SiftDetector()
-            # sift_detector.image = frame
-            # features, image = sift_detector.detect()
-            n_frames += 1
+            if i % 10 == 0:
+                sift_detector.image = frame
+                features, image = sift_detector.detect()
+            kalman_filter.image = frame
+            predicted = kalman_filter.track()
+            cv2.imshow("Bohh", predicted)
+            cv2.waitKey(0)
 
-        print(n_frames)
