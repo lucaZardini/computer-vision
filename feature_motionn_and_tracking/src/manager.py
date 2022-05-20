@@ -3,11 +3,18 @@ from typing import List
 import cv2
 
 from feature_detector.feature_detector import FeatureDetectorAlgorithm, FeatureDetector, FeatureDetectorBuilder, \
-    SiftDetector
-from feature_tracking.feature_tracking import KalmanFilter
+    SiftDetector, HarrisCornerDetector, GoodFeaturesToTrackDetector
+from feature_tracking.feature_tracking import KalmanFilter, LucasKanadeOpticalFlowTracker
+
+import numpy as np
+
+from matplotlib import pyplot as plt
 
 
 class TrackManager:
+
+    SAMPLING = 30
+
     @staticmethod
     def track_video(video_path):
         # create the feature detectors and the feature trackers
@@ -15,15 +22,37 @@ class TrackManager:
         # for algorithm in FeatureDetectorAlgorithm:
         #     feature_detectors = FeatureDetectorBuilder.build(algorithm)
         cap = cv2.VideoCapture(video_path)
-        sift_detector = SiftDetector()
-        kalman_filter = KalmanFilter()
-        for i in range(1000):
-            ret, frame = cap.read()
-            if i % 10 == 0:
-                sift_detector.image = frame
-                features, image = sift_detector.detect()
-            kalman_filter.image = frame
-            predicted = kalman_filter.track()
-            cv2.imshow("Bohh", predicted)
-            cv2.waitKey(0)
+        frame_index = 0
+        gff = GoodFeaturesToTrackDetector()
+        lk_tracker = LucasKanadeOpticalFlowTracker()
+        while cap.isOpened():
 
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % TrackManager.SAMPLING == 0:
+                gff.image = frame
+                corners = gff.detect()
+                lk_tracker.initialize(frame, corners)
+
+            else:
+                corners, status, err = lk_tracker.track(frame)
+
+            frame_copy = frame.copy()
+            int_corners = corners.astype(int)
+            for i, corner in enumerate(int_corners):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, (0, 255, 0), thickness=20)
+
+            cv2.imshow('GFF', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
