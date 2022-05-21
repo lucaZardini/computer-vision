@@ -11,6 +11,7 @@ class FeatureDetectorAlgorithm(Enum):
     SIFT = "sift"
     HARRIS_CORNER = "harris_corner"
     GOOD_FEATURES_TO_TRACK = "good_features_to_track"
+    ORB = "orb"
 
 
 class FeatureDetectorBuilder:
@@ -73,3 +74,40 @@ class GoodFeaturesToTrackDetector(FeatureDetector):
             raise AttributeError("The image has not been set")
         gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         return cv2.goodFeaturesToTrack(gray_image, maxCorners=1000, qualityLevel=0.01, minDistance=10, blockSize=3)
+
+
+class ORBDetector(FeatureDetector):
+
+    def detect(self):
+        if not self.is_image_set:
+            raise AttributeError("The image has not been set")
+        gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+
+        orb = cv2.ORB_create(nfeatures=2000)
+
+        return orb.detectAndCompute(gray_image, None)
+
+
+class FASTDetector(FeatureDetector):
+
+    def detect(self):
+        if not self.is_image_set:
+            raise AttributeError("The image has not been set")
+        gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        fast = cv2.FastFeatureDetector_create()
+
+        fast.setNonmaxSuppression(False)
+
+        return fast.detect(gray_image, None)
+
+
+class BriefDetector(FeatureDetector):
+
+    def detect(self):
+        if not self.is_image_set:
+            raise AttributeError("The image has not been set")
+        star = cv2.xfeatures2d.StarDetector_create()
+        brief = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+        kp = star.detect(self.image, None)
+        kp, des = brief.compute(self.image, kp)
