@@ -72,4 +72,4 @@ class GoodFeaturesToTrackDetector(FeatureDetector):
         if not self.is_image_set:
             raise AttributeError("The image has not been set")
         gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        return cv2.goodFeaturesToTrack(gray_image, maxCorners=100, qualityLevel=0.01, minDistance=10, blockSize=3)
+        return cv2.goodFeaturesToTrack(gray_image, maxCorners=1000, qualityLevel=0.01, minDistance=10, blockSize=3)

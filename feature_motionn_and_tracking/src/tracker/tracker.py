@@ -115,3 +115,86 @@ class SIFTwithLK(Tracker):
 
         cap.release()
         cv2.destroyAllWindows()
+
+
+class SIFTwithKF(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+        colours = []
+        for i in range(0, 100000):
+            col_np_array = np.random.choice(range(256), size=3)
+            col_list = []
+            for j in range(0, col_np_array.size):
+                col_list.append(col_np_array[j].item())
+            colours.append(tuple(col_list))
+
+        while cap.isOpened():
+            print(f"frame index = {frame_index}")
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            # if frame_index % 30 == 0:
+            self.detector.image = frame
+            features = self.detector.detect()
+            features = np.array([[k.pt] for k in features], dtype=np.float32)
+            int_corners = features.astype(int)
+
+            bboxes = []
+            for i, corner in enumerate(int_corners):
+                x, y = corner.ravel()
+                top = y - 10
+                left = x - 10
+                bottom = y + 10
+                right = x + 10
+                bbox = (top, left, bottom, right)
+                bboxes.append(bbox)
+            self.tracking.initialize(frame, bboxes)
+            # for i, corner in enumerate(int_corners):
+            #     x, y = corner.ravel()
+            #     top = y - 5
+            #     left = x - 5
+            #     bottom = y + 5
+            #     right = x + 5
+            #     cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+            # cv2.imshow("Track", frame)
+            # cv2.waitKey(40)
+
+            # else:
+            tracker_id_list, bounding_boxes, centres, scores, class_labels = self.tracking.track(frame)
+            # Draw bounding boxes, trajectories and print ids of the tracked pedestrians
+            track = 0
+            for track_id, bbox, track_centres in zip(tracker_id_list, bounding_boxes, centres):
+                top_f = bbox[0]
+                left_f = bbox[1]
+                bottom_f = bbox[2]
+                right_f = bbox[3]
+
+                top = int(bbox[0])
+                left = int(bbox[1])
+                bottom = int(bbox[2])
+                right = int(bbox[3])
+
+                # Draw the bounding box
+                cv2.rectangle(frame, (left, top), (right, bottom), colours[track], 2)
+                # Draw the trajectory using the centres of the previous bounding boxes
+                for point in track_centres[-30:]:
+                    cv2.circle(frame, (int(point[0]), int(point[1])), 2, colours[track], -1)
+                    # Draw the box used for id visualisation
+                cv2.rectangle(frame, (left, top - 20), (right, top), (0, 0, 255), cv2.FILLED)
+                # Print the id
+                font = cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(frame, str(track_id), (left, top - 5), font, 0.5, (255, 255, 255), 1)
+                track += 1
+
+            # Display the result
+            cv2.imshow("Track", frame)
+            cv2.waitKey(40)
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-import numpy as np
 
 import cv2
+
+from feature_tracking.kf import GlobalTracker
 
 
 class FeatureTrackingAlgorithm(Enum):
@@ -38,16 +39,26 @@ class KalmanFilter(FeatureTracking):
         self.features = None
 
     def initialize(self, frame, corner):
-        pass
+        self.global_tracker = GlobalTracker()
+        self.frame = frame
+        self.bboxes = corner
 
     def track(self, frame):
-        kalman_filter = cv2.KalmanFilter(4, 2)
-        kalman_filter.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
-        kalman_filter.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
-        kalman_filter.processNoiseCov = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)*0.03
-        kalman_filter.correct(self.features)
-        self.features = kalman_filter.predict()
-        return self.features
+
+        classes = ['person' for _ in range(0, len(self.bboxes))]
+        frame_scores = []
+        for i in range(len(self.bboxes)):
+            frame_scores.append(0)
+
+
+        tracker_id_list, bounding_boxes, centres, scores, class_labels = self.global_tracker.pipeline(self.bboxes,
+                                                                                                 frame_scores,
+                                                                                                 classes,
+                                                                                                 frame)
+        self.bboxes = bounding_boxes
+        self.frame = frame
+
+        return tracker_id_list, bounding_boxes, centres, scores, class_labels
 
 
 class LucasKanadeOpticalFlowTracker(FeatureTracking):
