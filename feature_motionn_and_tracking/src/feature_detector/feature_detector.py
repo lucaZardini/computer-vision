@@ -10,6 +10,7 @@ import cv2
 class FeatureDetectorAlgorithm(Enum):
     SIFT = "sift"
     HARRIS_CORNER = "harris_corner"
+    GOOD_FEATURES_TO_TRACK = "good_features_to_track"
 
 
 class FeatureDetectorBuilder:
@@ -19,6 +20,8 @@ class FeatureDetectorBuilder:
             return SiftDetector()
         elif algorithm == FeatureDetectorAlgorithm.HARRIS_CORNER:
             return HarrisCornerDetector()
+        elif algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
+            return GoodFeaturesToTrackDetector()
         else:
             raise ValueError()
 
@@ -49,7 +52,7 @@ class SiftDetector(FeatureDetector):
             raise AttributeError("The image has not been set")
         sift = cv2.SIFT_create()
         kp_obj, dsc_obj = sift.detectAndCompute(self.image, None)
-        return kp_obj, cv2.drawKeypoints(self.image, kp_obj, self.image, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        return kp_obj
 
 
 class HarrisCornerDetector(FeatureDetector):

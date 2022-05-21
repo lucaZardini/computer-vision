@@ -10,17 +10,35 @@ class FeatureTrackingAlgorithm(Enum):
     LK = "lucas_kanade"
 
 
+class FeatureTrackingBuilder:
+    @staticmethod
+    def build(algorithm: FeatureTrackingAlgorithm):
+        if algorithm == FeatureTrackingAlgorithm.KALMAN_FILTER:
+            return KalmanFilter()
+        elif algorithm == FeatureTrackingAlgorithm.LK:
+            return LucasKanadeOpticalFlowTracker()
+        else:
+            raise ValueError
+
+
 class FeatureTracking(ABC):
 
     @abstractmethod
     def track(self, frame):
         pass
 
+    @abstractmethod
+    def initialize(self, frame, corner):
+        pass
+
 
 class KalmanFilter(FeatureTracking):
 
-    def __init__(self, features):
-        self.features = features
+    def __init__(self):
+        self.features = None
+
+    def initialize(self, frame, corner):
+        pass
 
     def track(self, frame):
         kalman_filter = cv2.KalmanFilter(4, 2)
