@@ -111,3 +111,4 @@ class BriefDetector(FeatureDetector):
 
         kp = star.detect(self.image, None)
         kp, des = brief.compute(self.image, kp)
+        return kp

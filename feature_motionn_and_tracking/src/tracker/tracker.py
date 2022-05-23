@@ -138,7 +138,84 @@ class ORBwithLK(Tracker):
                 self.tracking.initialize(frame, features)
             else:
                 features, status, err = self.tracking.track(frame)
-                print(type(features))
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
+
+            cv2.imshow('ORB and LK', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class FASTwithLK(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                self.detector.image = frame
+                features = self.detector.detect()
+                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                self.tracking.initialize(frame, features)
+            else:
+                features, status, err = self.tracking.track(frame)
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
+
+            cv2.imshow('ORB and LK', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class BRIEFwithLK(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                self.detector.image = frame
+                features = self.detector.detect()
+                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                self.tracking.initialize(frame, features)
+            else:
+                features, status, err = self.tracking.track(frame)
 
             frame_copy = frame.copy()
             int_features = features.astype(int)
