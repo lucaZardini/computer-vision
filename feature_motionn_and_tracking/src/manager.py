@@ -1,15 +1,16 @@
 from typing import List
 
-from feature_detector.feature_detector import FeatureDetectorAlgorithm
-from feature_tracking.feature_tracking import FeatureTrackingAlgorithm
+from feature_detector.feature_detector import FeatureDetectorAlgorithm, SiftDetector, GoodFeaturesToTrackDetector, \
+    ORBDetector
+from feature_tracking.feature_tracking import FeatureTrackingAlgorithm, LucasKanadeOpticalFlowTracker
 
-from tracker.tracker import Tracker, TrackerBuilder
+from tracker.tracker import Tracker, TrackerBuilder, TrackGFFwithLK, ORBwithLK
 
 
 class TrackManager:
 
     @staticmethod
-    def track_video(video_path):
+    def track_video(video_path: str) -> None:
         # create the feature detectors and the feature trackers
         trackers: List[Tracker] = []
         for detect_algorithm in FeatureDetectorAlgorithm:
