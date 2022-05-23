@@ -8,8 +8,6 @@ from tracker.tracker import Tracker, TrackerBuilder
 
 class TrackManager:
 
-    SAMPLING = 30
-
     @staticmethod
     def track_video(video_path):
         # create the feature detectors and the feature trackers
