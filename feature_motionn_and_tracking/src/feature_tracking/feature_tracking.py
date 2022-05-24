@@ -7,16 +7,16 @@ from feature_tracking.kf import GlobalTracker
 
 
 class FeatureTrackingAlgorithm(Enum):
-    KALMAN_FILTER = "kalman_filter"
+    # KALMAN_FILTER = "kalman_filter"
     LK = "lucas_kanade"
 
 
 class FeatureTrackingBuilder:
     @staticmethod
     def build(algorithm: FeatureTrackingAlgorithm):
-        if algorithm == FeatureTrackingAlgorithm.KALMAN_FILTER:
-            return KalmanFilter()
-        elif algorithm == FeatureTrackingAlgorithm.LK:
+        # if algorithm == FeatureTrackingAlgorithm.KALMAN_FILTER:
+        #     return KalmanFilter()
+        if algorithm == FeatureTrackingAlgorithm.LK:
             return LucasKanadeOpticalFlowTracker()
         else:
             raise ValueError

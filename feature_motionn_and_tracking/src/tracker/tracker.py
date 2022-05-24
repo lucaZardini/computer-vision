@@ -1,3 +1,4 @@
+import os
 from abc import abstractmethod
 
 from feature_detector.feature_detector import FeatureDetector, FeatureDetectorAlgorithm, \
@@ -13,10 +14,14 @@ class Tracker:
 
     SAMPLING = 30
 
-    def __init__(self, detector: FeatureDetector, tracking: FeatureTracking, video):
+    KEYPOINT_PATH = "../keypoints/"
+
+    def __init__(self, detector: FeatureDetector, tracking: FeatureTracking, video: str, online: bool):
         self.detector = detector
         self.tracking = tracking
         self.video = video
+        self.online = online
+        self._keypoints = None
         self._result = None
 
     @property
@@ -26,6 +31,21 @@ class Tracker:
         else:
             return self.track()
 
+    @property
+    def file_with_keypoints_is_present(self) -> bool:
+        if not self.online:
+            path_to_file = self.KEYPOINT_PATH+self.detector.name()+".npy"
+            return os.path.exists(path_to_file)
+        return True
+
+    def get_keypoints(self, frame_index):
+        if self._keypoints is not None:
+            return self._keypoints[frame_index]
+        else:
+            path_to_file = self.KEYPOINT_PATH + self.detector.name() + ".npy"
+            self._keypoints = np.load(path_to_file, allow_pickle=True)
+            return self._keypoints[frame_index]
+
     @abstractmethod
     def track(self):
         pass
@@ -34,10 +54,30 @@ class Tracker:
 class TrackerBuilder:
 
     @staticmethod
-    def build(detector_algorithm: FeatureDetectorAlgorithm, tracker_algorithm: FeatureTrackingAlgorithm, video: str):
+    def build(detector_algorithm: FeatureDetectorAlgorithm, tracker_algorithm: FeatureTrackingAlgorithm, video: str, online: bool):
         detector = FeatureDetectorBuilder.build(detector_algorithm)
         tracker = FeatureTrackingBuilder.build(tracker_algorithm)
-        return Tracker(detector=detector, tracking=tracker, video=video)
+        if tracker_algorithm == FeatureTrackingAlgorithm.LK:
+
+            if detector_algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
+                return TrackGFFwithLK(detector=detector, tracking=tracker, video=video, online=online)
+
+            elif detector_algorithm == FeatureDetectorAlgorithm.SIFT:
+                return SIFTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+
+            elif detector_algorithm == FeatureDetectorAlgorithm.ORB:
+                return ORBwithLK(detector=detector, tracking=tracker, video=video, online=online)
+
+            elif detector_algorithm == FeatureDetectorAlgorithm.FAST:
+                return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+
+            elif detector_algorithm == FeatureDetectorAlgorithm.BRIEF:
+                return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+
+            else:
+                pass
+        else:
+            pass
 
 
 class TrackGFFwithLK(Tracker):
@@ -54,10 +94,14 @@ class TrackGFFwithLK(Tracker):
                 break
 
             if frame_index % self.SAMPLING == 0:
-                self.detector.image = frame
-                corners = self.detector.detect()
+                if self.online:
+                    self.detector.image = frame
+                    corners = self.detector.detect()
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    corners = self.get_keypoints(frame_index)
                 self.tracking.initialize(frame, corners)
-
             else:
                 corners, status, err = self.tracking.track(frame)
 
@@ -93,9 +137,14 @@ class SIFTwithLK(Tracker):
                 break
 
             if frame_index % self.SAMPLING == 0:
-                self.detector.image = frame
-                features = self.detector.detect()
-                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
                 self.tracking.initialize(frame, features)
             else:
                 features, status, err = self.tracking.track(frame)
@@ -132,9 +181,14 @@ class ORBwithLK(Tracker):
                 break
 
             if frame_index % self.SAMPLING == 0:
-                self.detector.image = frame
-                features, descriptor = self.detector.detect()
-                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                if self.online:
+                    self.detector.image = frame
+                    features, descriptor = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
                 self.tracking.initialize(frame, features)
             else:
                 features, status, err = self.tracking.track(frame)
@@ -171,9 +225,14 @@ class FASTwithLK(Tracker):
                 break
 
             if frame_index % self.SAMPLING == 0:
-                self.detector.image = frame
-                features = self.detector.detect()
-                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
                 self.tracking.initialize(frame, features)
             else:
                 features, status, err = self.tracking.track(frame)
@@ -210,9 +269,14 @@ class BRIEFwithLK(Tracker):
                 break
 
             if frame_index % self.SAMPLING == 0:
-                self.detector.image = frame
-                features = self.detector.detect()
-                features = np.array([[k.pt] for k in features], dtype=np.float32)
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
                 self.tracking.initialize(frame, features)
             else:
                 features, status, err = self.tracking.track(frame)

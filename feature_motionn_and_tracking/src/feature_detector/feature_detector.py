@@ -10,8 +10,10 @@ import cv2
 class FeatureDetectorAlgorithm(Enum):
     SIFT = "sift"
     HARRIS_CORNER = "harris_corner"
-    GOOD_FEATURES_TO_TRACK = "good_features_to_track"
+    GOOD_FEATURES_TO_TRACK = "gff"
     ORB = "orb"
+    FAST = "fast"
+    BRIEF = "brief"
 
 
 class FeatureDetectorBuilder:
@@ -23,6 +25,12 @@ class FeatureDetectorBuilder:
             return HarrisCornerDetector()
         elif algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
             return GoodFeaturesToTrackDetector()
+        elif algorithm == FeatureDetectorAlgorithm.ORB:
+            return ORBDetector()
+        elif algorithm == FeatureDetectorAlgorithm.FAST:
+            return FASTDetector()
+        elif algorithm == FeatureDetectorAlgorithm.BRIEF:
+            return BriefDetector()
         else:
             raise ValueError()
 
@@ -42,8 +50,13 @@ class FeatureDetector(ABC):
             return True
 
     @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
     def detect(self):
         pass
+
 
 
 class SiftDetector(FeatureDetector):
@@ -54,6 +67,9 @@ class SiftDetector(FeatureDetector):
         sift = cv2.SIFT_create()
         kp_obj, dsc_obj = sift.detectAndCompute(self.image, None)
         return kp_obj
+
+    def name(self):
+        return FeatureDetectorAlgorithm.SIFT.value
 
 
 class HarrisCornerDetector(FeatureDetector):
@@ -66,6 +82,9 @@ class HarrisCornerDetector(FeatureDetector):
 
         return cv2.cornerHarris(gray_image, blockSize=2, ksize=3, k=0.04)
 
+    def name(self):
+        return FeatureDetectorAlgorithm.HARRIS_CORNER.value
+
 
 class GoodFeaturesToTrackDetector(FeatureDetector):
 
@@ -74,6 +93,9 @@ class GoodFeaturesToTrackDetector(FeatureDetector):
             raise AttributeError("The image has not been set")
         gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         return cv2.goodFeaturesToTrack(gray_image, maxCorners=1000, qualityLevel=0.01, minDistance=10, blockSize=3)
+
+    def name(self):
+        return FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value
 
 
 class ORBDetector(FeatureDetector):
@@ -86,6 +108,9 @@ class ORBDetector(FeatureDetector):
         orb = cv2.ORB_create(nfeatures=2000)
 
         return orb.detectAndCompute(gray_image, None)
+
+    def name(self):
+        return FeatureDetectorAlgorithm.ORB.value
 
 
 class FASTDetector(FeatureDetector):
@@ -100,6 +125,9 @@ class FASTDetector(FeatureDetector):
 
         return fast.detect(gray_image, None)
 
+    def name(self):
+        return FeatureDetectorAlgorithm.FAST.value
+
 
 class BriefDetector(FeatureDetector):
 
@@ -112,3 +140,6 @@ class BriefDetector(FeatureDetector):
         kp = star.detect(self.image, None)
         kp, des = brief.compute(self.image, kp)
         return kp
+
+    def name(self):
+        return FeatureDetectorAlgorithm.BRIEF.value
