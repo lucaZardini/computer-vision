@@ -5,7 +5,7 @@ from feature_detector.feature_detector import SiftDetector, GoodFeaturesToTrackD
 import numpy as np
 
 if __name__ == "__main__":
-    video_path = "../video/video.mp4"
+    video_path = "../../video/video.mp4"
     sift = SiftDetector()
     gff = GoodFeaturesToTrackDetector()
     orb = ORBDetector()
@@ -54,9 +54,9 @@ if __name__ == "__main__":
         brief_keypoint = np.array([[k.pt] for k in brief_keypoint], dtype=np.float32)
         brief_keypoints.append(brief_keypoint)
 
-    np.save('../keypoints/sift.npy', sift_keypoints, allow_pickle=True)
-    np.save('../keypoints/gff.npy', gff_keypoints, allow_pickle=True)
-    np.save('../keypoints/orb.npy', orb_keypoints, allow_pickle=True)
-    np.save('../keypoints/fast.npy', fast_keypoints, allow_pickle=True)
-    np.save('../keypoints/brief.npy', brief_keypoints, allow_pickle=True)
+    np.save('../../keypoints/sift.npy', sift_keypoints, allow_pickle=True)
+    np.save('../../keypoints/gff.npy', gff_keypoints, allow_pickle=True)
+    np.save('../../keypoints/orb.npy', orb_keypoints, allow_pickle=True)
+    np.save('../../keypoints/fast.npy', fast_keypoints, allow_pickle=True)
+    np.save('../../keypoints/brief.npy', brief_keypoints, allow_pickle=True)
 
