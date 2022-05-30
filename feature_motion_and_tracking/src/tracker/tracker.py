@@ -352,3 +352,219 @@ class GoodFeaturesWithKalmanFilters(Tracker):
 
         cap.release()
         cv2.destroyAllWindows()
+
+
+class SiftWithKalmanFilters(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.initialize(frame, features)
+            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.track(features)
+            else:
+                features = self.tracking.predict()
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
+
+            cv2.imshow('GFF', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class FastWithKalmanFilters(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.initialize(frame, features)
+            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.track(features)
+            else:
+                features = self.tracking.predict()
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
+
+            cv2.imshow('GFF', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class OrbWithKalmanFilters(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.initialize(frame, features)
+            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.track(features)
+            else:
+                features = self.tracking.predict()
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
+
+            cv2.imshow('GFF', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class BriefWithKalmanFilters(Tracker):
+
+    def track(self):
+        cap = cv2.VideoCapture(self.video)
+        frame_index = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.SAMPLING == 0:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.initialize(frame, features)
+            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
+                if self.online:
+                    self.detector.image = frame
+                    features = self.detector.detect()
+                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                else:
+                    if not self.file_with_keypoints_is_present:
+                        raise FileExistsError("The file does not exists")
+                    features = self.get_keypoints(frame_index)
+                self.tracking.track(features)
+            else:
+                features = self.tracking.predict()
+
+            frame_copy = frame.copy()
+            int_features = features.astype(int)
+            for i, corner in enumerate(int_features):
+                x, y = corner.ravel()
+                color = np.float64([i, 2 * i, 255 - i])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
+
+            cv2.imshow('GFF', frame_copy)
+
+            if cv2.waitKey(1) == ord('q') or not ret:
+                break
+
+            frame_index += 1
+
+        cap.release()
+        cv2.destroyAllWindows()
