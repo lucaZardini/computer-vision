@@ -7,7 +7,7 @@ import numpy as np
 
 KEYPOINTS_DIRECTORY = "../../keypoints/"
 KEYPOINTS_EXTENTION = ".npy"
-NUMBER_OF_KEYPOINTS = 10000
+NUMBER_OF_KEYPOINTS = 17
 
 KEYPOINTS_DIRECTORY_COMPARISON = "../../keypoints_comparison/"
 KEYPOINTS_COMPARISON_EXTENTION = ".json"
@@ -25,12 +25,19 @@ def save_keypoints(overlap: List[int], number_of_keypoints: int, first_method: F
 
 def compare_keypoints(keypoint_first: List[Tuple[int, int]], keypoint_second: List[Tuple[int, int]], number_of_keypoints: int) -> int:
     keypoints_in_both = 0
+    # print(len(keypoint_first))
+    # print(len(keypoint_second))
     if len(keypoint_first) < number_of_keypoints or len(keypoint_second) < number_of_keypoints:
         raise ValueError(f"The number {number_of_keypoints} is too large")
     for keypoint_number in range(number_of_keypoints):
-        keypoint = keypoint_first[keypoint_number]
-        if keypoint in keypoint_second:
-            keypoints_in_both += 1
+        keypoint = keypoint_first[keypoint_number][0]
+        for i, second_keypoint in enumerate(keypoint_second):
+            if i <= number_of_keypoints:
+                # print(second_keypoint[0])
+                # print(type(second_keypoint[0][0]))
+                # print(type(second_keypoint[0][1]))
+                if (int(round(keypoint[0])), int(round(keypoint[1]))) == (int(round(second_keypoint[0][0])), int(round(second_keypoint[0][1]))):
+                    keypoints_in_both += 1
     return keypoints_in_both
 
 
@@ -53,5 +60,4 @@ def compare_algorithms_keypoints(first_method: FeatureDetectorAlgorithm, second_
 
 
 if __name__ == "__main__":
-    # TODO: compare all methods
-    pass
+    compare_algorithms_keypoints(first_method=FeatureDetectorAlgorithm.BRIEF, second_method=FeatureDetectorAlgorithm.ORB)
