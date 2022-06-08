@@ -14,8 +14,6 @@ class Tracker:
 
     SAMPLING = 30
 
-    FRAME_DETECTION = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-
     KEYPOINT_PATH = "../keypoints/"
 
     def __init__(self, detector: FeatureDetector, tracking: FeatureTracking, video: str, online: bool):
@@ -61,71 +59,30 @@ class TrackerBuilder:
         tracker = FeatureTrackingBuilder.build(tracker_algorithm)
         if tracker_algorithm == FeatureTrackingAlgorithm.LK:
 
-            if detector_algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
-                return TrackGFFwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            return LucasKanadeTracker(detector=detector, tracking=tracker, video=video, online=online)
 
-            elif detector_algorithm == FeatureDetectorAlgorithm.SIFT:
-                return SIFTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            # if detector_algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
+            #     return TrackGFFwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            #
+            # elif detector_algorithm == FeatureDetectorAlgorithm.SIFT:
+            #     return SIFTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            #
+            # elif detector_algorithm == FeatureDetectorAlgorithm.ORB:
+            #     return ORBwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            #
+            # elif detector_algorithm == FeatureDetectorAlgorithm.FAST:
+            #     return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
+            #
+            # elif detector_algorithm == FeatureDetectorAlgorithm.STAR:
+            #     return STARwithLK(detector=detector, tracking=tracker, video=video, online=online)
 
-            elif detector_algorithm == FeatureDetectorAlgorithm.ORB:
-                return ORBwithLK(detector=detector, tracking=tracker, video=video, online=online)
-
-            elif detector_algorithm == FeatureDetectorAlgorithm.FAST:
-                return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
-
-            elif detector_algorithm == FeatureDetectorAlgorithm.BRIEF:
-                return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
-
-            else:
-                pass
+            # else:
+            #     pass
         else:
             pass
 
 
-class TrackGFFwithLK(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    corners = self.detector.detect()
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    corners = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, corners)
-            else:
-                corners, status, err = self.tracking.track(frame)
-
-            frame_copy = frame.copy()
-            int_corners = corners.astype(int)
-            for i, corner in enumerate(int_corners):
-                x, y = corner.ravel()
-                color = np.float64([3 * i, 2 * i, 255 - (i * 4)])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=5)
-
-            cv2.imshow('GFF', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class SIFTwithLK(Tracker):
+class LucasKanadeTracker(Tracker):
 
     def track(self):
         cap = cv2.VideoCapture(self.video)
@@ -142,7 +99,8 @@ class SIFTwithLK(Tracker):
                 if self.online:
                     self.detector.image = frame
                     features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                    if self.detector.name() != FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value:
+                        features = np.array([[k.pt] for k in features], dtype=np.float32)
                 else:
                     if not self.file_with_keypoints_is_present:
                         raise FileExistsError("The file does not exists")
@@ -158,7 +116,7 @@ class SIFTwithLK(Tracker):
                 color = np.float64([i, 2 * i, 255 - i])
                 cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
 
-            cv2.imshow('GFF', frame_copy)
+            cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:
                 break
@@ -169,51 +127,7 @@ class SIFTwithLK(Tracker):
         cv2.destroyAllWindows()
 
 
-class ORBwithLK(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features, descriptor = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            else:
-                features, status, err = self.tracking.track(frame)
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
-
-            cv2.imshow('ORB and LK', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class FASTwithLK(Tracker):
+class KalmanFilterTracker(Tracker):
 
     def track(self):
         cap = cv2.VideoCapture(self.video)
@@ -230,108 +144,27 @@ class FASTwithLK(Tracker):
                 if self.online:
                     self.detector.image = frame
                     features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                    if self.detector.name() != FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value:
+                        features = np.array([[k.pt] for k in features], dtype=np.float32)
+                    features = features[:40]
                 else:
                     if not self.file_with_keypoints_is_present:
                         raise FileExistsError("The file does not exists")
                     features = self.get_keypoints(frame_index)
+                    features = features[:40]
                 self.tracking.initialize(frame, features)
-            else:
-                features, status, err = self.tracking.track(frame)
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
-
-            cv2.imshow('ORB and LK', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class BRIEFwithLK(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
+            elif (frame_index % self.SAMPLING) % 2 == 0:
                 if self.online:
                     self.detector.image = frame
                     features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
+                    if self.detector.name() != FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value:
+                        features = np.array([[k.pt] for k in features], dtype=np.float32)
+                    features = features[:40]
                 else:
                     if not self.file_with_keypoints_is_present:
                         raise FileExistsError("The file does not exists")
                     features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            else:
-                features, status, err = self.tracking.track(frame)
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
-
-            cv2.imshow('ORB and LK', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class GoodFeaturesWithKalmanFilters(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    # features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
+                    features = features[:40]
                 self.tracking.track(features)
             else:
                 features = self.tracking.predict()
@@ -343,223 +176,7 @@ class GoodFeaturesWithKalmanFilters(Tracker):
                 color = np.float64([i, 2 * i, 255 - i])
                 cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
 
-            cv2.imshow('GFF', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class SiftWithKalmanFilters(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.track(features)
-            else:
-                features = self.tracking.predict()
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
-
-            cv2.imshow('GFF', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class FastWithKalmanFilters(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.track(features)
-            else:
-                features = self.tracking.predict()
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
-
-            cv2.imshow('GFF', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class OrbWithKalmanFilters(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.track(features)
-            else:
-                features = self.tracking.predict()
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
-
-            cv2.imshow('GFF', frame_copy)
-
-            if cv2.waitKey(1) == ord('q') or not ret:
-                break
-
-            frame_index += 1
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-
-class BriefWithKalmanFilters(Tracker):
-
-    def track(self):
-        cap = cv2.VideoCapture(self.video)
-        frame_index = 0
-
-        while cap.isOpened():
-
-            ret, frame = cap.read()
-
-            if not ret:
-                break
-
-            if frame_index % self.SAMPLING == 0:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.initialize(frame, features)
-            elif frame_index % self.SAMPLING in self.FRAME_DETECTION:
-                if self.online:
-                    self.detector.image = frame
-                    features = self.detector.detect()
-                    features = np.array([[k.pt] for k in features], dtype=np.float32)
-                else:
-                    if not self.file_with_keypoints_is_present:
-                        raise FileExistsError("The file does not exists")
-                    features = self.get_keypoints(frame_index)
-                self.tracking.track(features)
-            else:
-                features = self.tracking.predict()
-
-            frame_copy = frame.copy()
-            int_features = features.astype(int)
-            for i, corner in enumerate(int_features):
-                x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
-
-            cv2.imshow('GFF', frame_copy)
+            cv2.imshow(f'{self.detector.name()} with KF', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:
                 break

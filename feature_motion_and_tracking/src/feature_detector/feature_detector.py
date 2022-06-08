@@ -2,18 +2,16 @@ from __future__ import absolute_import, annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-import numpy as np
 
 import cv2
 
 
 class FeatureDetectorAlgorithm(Enum):
     SIFT = "sift"
-    HARRIS_CORNER = "harris_corner"
     GOOD_FEATURES_TO_TRACK = "gff"
     ORB = "orb"
     FAST = "fast"
-    BRIEF = "brief"
+    STAR = "star"
 
 
 class FeatureDetectorBuilder:
@@ -21,16 +19,14 @@ class FeatureDetectorBuilder:
     def build(algorithm: FeatureDetectorAlgorithm):
         if algorithm == FeatureDetectorAlgorithm.SIFT:
             return SiftDetector()
-        elif algorithm == FeatureDetectorAlgorithm.HARRIS_CORNER:
-            return HarrisCornerDetector()
         elif algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
             return GoodFeaturesToTrackDetector()
         elif algorithm == FeatureDetectorAlgorithm.ORB:
             return ORBDetector()
         elif algorithm == FeatureDetectorAlgorithm.FAST:
             return FASTDetector()
-        elif algorithm == FeatureDetectorAlgorithm.BRIEF:
-            return BriefDetector()
+        elif algorithm == FeatureDetectorAlgorithm.STAR:
+            return StarDetector()
         else:
             raise ValueError()
 
@@ -64,25 +60,11 @@ class SiftDetector(FeatureDetector):
         if not self.is_image_set:
             raise AttributeError("The image has not been set")
         sift = cv2.SIFT_create()
-        kp_obj, dsc_obj = sift.detectAndCompute(self.image, None)
-        return kp_obj
+        kp, dsc = sift.detectAndCompute(self.image, None)
+        return kp
 
     def name(self):
         return FeatureDetectorAlgorithm.SIFT.value
-
-
-class HarrisCornerDetector(FeatureDetector):
-
-    def detect(self):
-        if not self.is_image_set:
-            raise AttributeError("The image has not been set")
-        gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        gray_image = np.float32(gray_image)
-
-        return cv2.cornerHarris(gray_image, blockSize=2, ksize=3, k=0.04)
-
-    def name(self):
-        return FeatureDetectorAlgorithm.HARRIS_CORNER.value
 
 
 class GoodFeaturesToTrackDetector(FeatureDetector):
@@ -105,8 +87,9 @@ class ORBDetector(FeatureDetector):
         gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
         orb = cv2.ORB_create(nfeatures=2000)
+        kp, desc = orb.detectAndCompute(gray_image, None)
 
-        return orb.detectAndCompute(gray_image, None)
+        return kp
 
     def name(self):
         return FeatureDetectorAlgorithm.ORB.value
@@ -128,17 +111,15 @@ class FASTDetector(FeatureDetector):
         return FeatureDetectorAlgorithm.FAST.value
 
 
-class BriefDetector(FeatureDetector):
+class StarDetector(FeatureDetector):
 
     def detect(self):
         if not self.is_image_set:
             raise AttributeError("The image has not been set")
         star = cv2.xfeatures2d.StarDetector_create()
-        brief = cv2.xfeatures2d.BriefDescriptorExtractor_create()
 
         kp = star.detect(self.image, None)
-        kp, des = brief.compute(self.image, kp)
         return kp
 
     def name(self):
-        return FeatureDetectorAlgorithm.BRIEF.value
+        return FeatureDetectorAlgorithm.STAR.value

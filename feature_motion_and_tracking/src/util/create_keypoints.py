@@ -1,6 +1,6 @@
 import cv2
 
-from feature_detector.feature_detector import SiftDetector, GoodFeaturesToTrackDetector, ORBDetector, FASTDetector, BriefDetector
+from feature_detector.feature_detector import SiftDetector, GoodFeaturesToTrackDetector, ORBDetector, FASTDetector, StarDetector
 
 import numpy as np
 
@@ -10,7 +10,7 @@ if __name__ == "__main__":
     gff = GoodFeaturesToTrackDetector()
     orb = ORBDetector()
     fast = FASTDetector()
-    brief = BriefDetector()
+    brief = StarDetector()
 
     cap = cv2.VideoCapture(video_path)
 
