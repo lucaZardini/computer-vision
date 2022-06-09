@@ -8,28 +8,22 @@ from feature_tracking.feature_tracking import FeatureTracking, FeatureTrackingAl
 import cv2
 
 import numpy as np
+import random
 
 
 class Tracker:
 
+    random.seed(10)
     SAMPLING = 30
 
     KEYPOINT_PATH = "../keypoints/"
 
-    def __init__(self, detector: FeatureDetector, tracking: FeatureTracking, video: str, online: bool):
+    def __init__(self, detector: FeatureDetector, tracking: FeatureTracking, video: str, online: bool, save_video: bool):
         self.detector = detector
         self.tracking = tracking
         self.video = video
         self.online = online
-        self._keypoints = None
-        self._result = None
-
-    @property
-    def result(self):
-        if self._result:
-            return self._result
-        else:
-            return self.track()
+        self.save_video = save_video
 
     @property
     def file_with_keypoints_is_present(self) -> bool:
@@ -54,32 +48,15 @@ class Tracker:
 class TrackerBuilder:
 
     @staticmethod
-    def build(detector_algorithm: FeatureDetectorAlgorithm, tracker_algorithm: FeatureTrackingAlgorithm, video: str, online: bool):
+    def build(detector_algorithm: FeatureDetectorAlgorithm, tracker_algorithm: FeatureTrackingAlgorithm, video: str, online: bool, save_video: bool):
         detector = FeatureDetectorBuilder.build(detector_algorithm)
         tracker = FeatureTrackingBuilder.build(tracker_algorithm)
         if tracker_algorithm == FeatureTrackingAlgorithm.LK:
-
-            return LucasKanadeTracker(detector=detector, tracking=tracker, video=video, online=online)
-
-            # if detector_algorithm == FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK:
-            #     return TrackGFFwithLK(detector=detector, tracking=tracker, video=video, online=online)
-            #
-            # elif detector_algorithm == FeatureDetectorAlgorithm.SIFT:
-            #     return SIFTwithLK(detector=detector, tracking=tracker, video=video, online=online)
-            #
-            # elif detector_algorithm == FeatureDetectorAlgorithm.ORB:
-            #     return ORBwithLK(detector=detector, tracking=tracker, video=video, online=online)
-            #
-            # elif detector_algorithm == FeatureDetectorAlgorithm.FAST:
-            #     return FASTwithLK(detector=detector, tracking=tracker, video=video, online=online)
-            #
-            # elif detector_algorithm == FeatureDetectorAlgorithm.STAR:
-            #     return STARwithLK(detector=detector, tracking=tracker, video=video, online=online)
-
-            # else:
-            #     pass
+            return LucasKanadeTracker(detector=detector, tracking=tracker, video=video, online=online, save_video=save_video)
+        elif tracker_algorithm == FeatureTrackingAlgorithm.KALMAN_FILTER:
+            return KalmanFilterTracker(detector=detector, tracking=tracker, video=video, online=online, save_video=save_video)
         else:
-            pass
+            raise ValueError(f"The tracker algorithm {tracker_algorithm.value} is not still supported")
 
 
 class LucasKanadeTracker(Tracker):
@@ -87,6 +64,10 @@ class LucasKanadeTracker(Tracker):
     def track(self):
         cap = cv2.VideoCapture(self.video)
         frame_index = 0
+        out = None
+        if self.save_video:
+            fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+            out = cv2.VideoWriter(f'{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, 20.0, (2160, 3840))
 
         while cap.isOpened():
 
@@ -113,9 +94,10 @@ class LucasKanadeTracker(Tracker):
             int_features = features.astype(int)
             for i, corner in enumerate(int_features):
                 x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
+                color = np.float64([(i * 47) % 255, (297 * i) % 255, (103 * i) % 255])
                 cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
-
+            if self.save_video and out is not None:
+                out.write(frame_copy)
             cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:
@@ -133,6 +115,11 @@ class KalmanFilterTracker(Tracker):
         cap = cv2.VideoCapture(self.video)
         frame_index = 0
 
+        out = None
+        if self.save_video:
+            fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+            out = cv2.VideoWriter(f'{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, 20.0, (2160, 3840))
+
         while cap.isOpened():
 
             ret, frame = cap.read()
@@ -146,12 +133,12 @@ class KalmanFilterTracker(Tracker):
                     features = self.detector.detect()
                     if self.detector.name() != FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value:
                         features = np.array([[k.pt] for k in features], dtype=np.float32)
-                    features = features[:40]
+                    features = features[:100]
                 else:
                     if not self.file_with_keypoints_is_present:
                         raise FileExistsError("The file does not exists")
                     features = self.get_keypoints(frame_index)
-                    features = features[:40]
+                    features = features[:100]
                 self.tracking.initialize(frame, features)
             elif (frame_index % self.SAMPLING) % 2 == 0:
                 if self.online:
@@ -159,12 +146,12 @@ class KalmanFilterTracker(Tracker):
                     features = self.detector.detect()
                     if self.detector.name() != FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value:
                         features = np.array([[k.pt] for k in features], dtype=np.float32)
-                    features = features[:40]
+                    features = features[:100]
                 else:
                     if not self.file_with_keypoints_is_present:
                         raise FileExistsError("The file does not exists")
                     features = self.get_keypoints(frame_index)
-                    features = features[:40]
+                    features = features[:100]
                 self.tracking.track(features)
             else:
                 features = self.tracking.predict()
@@ -173,9 +160,11 @@ class KalmanFilterTracker(Tracker):
             int_features = features.astype(int)
             for i, corner in enumerate(int_features):
                 x, y = corner.ravel()
-                color = np.float64([i, 2 * i, 255 - i])
-                cv2.circle(frame_copy, (x, y), 20, color, thickness=20)
+                color = np.float64([(i * 47) % 255, (297 * i) % 255, (103 * i) % 255])
+                cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
 
+            if self.save_video and out is not None:
+                out.write(frame_copy)
             cv2.imshow(f'{self.detector.name()} with KF', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:

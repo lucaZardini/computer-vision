@@ -59,7 +59,7 @@ class SiftDetector(FeatureDetector):
     def detect(self):
         if not self.is_image_set:
             raise AttributeError("The image has not been set")
-        sift = cv2.SIFT_create()
+        sift = cv2.SIFT_create(nfeatures=2000)
         kp, dsc = sift.detectAndCompute(self.image, None)
         return kp
 
@@ -73,7 +73,9 @@ class GoodFeaturesToTrackDetector(FeatureDetector):
         if not self.is_image_set:
             raise AttributeError("The image has not been set")
         gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        return cv2.goodFeaturesToTrack(gray_image, maxCorners=100, qualityLevel=0.01, minDistance=10, blockSize=3)
+        kp = cv2.goodFeaturesToTrack(gray_image, maxCorners=2000, qualityLevel=0.01, minDistance=10, blockSize=3)
+
+        return kp
 
     def name(self):
         return FeatureDetectorAlgorithm.GOOD_FEATURES_TO_TRACK.value
@@ -88,7 +90,6 @@ class ORBDetector(FeatureDetector):
 
         orb = cv2.ORB_create(nfeatures=2000)
         kp, desc = orb.detectAndCompute(gray_image, None)
-
         return kp
 
     def name(self):
@@ -104,8 +105,8 @@ class FASTDetector(FeatureDetector):
         fast = cv2.FastFeatureDetector_create()
 
         fast.setNonmaxSuppression(False)
-
-        return fast.detect(gray_image, None)
+        kp = fast.detect(gray_image, None)
+        return kp
 
     def name(self):
         return FeatureDetectorAlgorithm.FAST.value
@@ -119,6 +120,8 @@ class StarDetector(FeatureDetector):
         star = cv2.xfeatures2d.StarDetector_create()
 
         kp = star.detect(self.image, None)
+        if len(kp) > 2000:
+            kp = kp[:2000]
         return kp
 
     def name(self):

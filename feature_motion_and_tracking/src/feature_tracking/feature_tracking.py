@@ -37,6 +37,10 @@ class FeatureTracking(ABC):
     def predict(self):
         pass
 
+    @abstractmethod
+    def name(self):
+        pass
+
 
 class LucasKanadeOpticalFlowTracker(FeatureTracking):
 
@@ -53,6 +57,9 @@ class LucasKanadeOpticalFlowTracker(FeatureTracking):
         self.previous_frame = current_frame.copy()
         self.previous_corners = corners
         return corners, status, err
+
+    def name(self):
+        return FeatureTrackingAlgorithm.LK.value
 
 
 class TrackUsingKalmanFilters(FeatureTracking):
@@ -174,6 +181,9 @@ class TrackUsingKalmanFilters(FeatureTracking):
                 tracker = self.kalman_filters[trk_idx]
                 # increase the number of consecutive times of unmatched detection by 1
                 tracker.unmatched_detection_number += 1
+
+    def name(self):
+        return FeatureTrackingAlgorithm.KALMAN_FILTER.value
 
     @staticmethod
     def _box_iou2(a, b):

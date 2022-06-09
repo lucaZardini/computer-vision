@@ -38,7 +38,7 @@ if __name__ == "__main__":
         sift_keypoints.append(sift_keypoint)
         gff_keypoint = gff.detect()  # OK
         gff_keypoints.append(gff_keypoint)
-        orb_keypoint, _ = orb.detect()
+        orb_keypoint = orb.detect()
         orb_keypoint = np.array([[k.pt] for k in orb_keypoint], dtype=np.float32)
         orb_keypoints.append(orb_keypoint)
         fast_keypoint = fast.detect()
@@ -58,5 +58,4 @@ if __name__ == "__main__":
     np.save('../../keypoints/gff.npy', gff_keypoints, allow_pickle=True)
     np.save('../../keypoints/orb.npy', orb_keypoints, allow_pickle=True)
     np.save('../../keypoints/fast.npy', fast_keypoints, allow_pickle=True)
-    np.save('../../keypoints/brief.npy', brief_keypoints, allow_pickle=True)
-
+    np.save('../../keypoints/star.npy', brief_keypoints, allow_pickle=True)
