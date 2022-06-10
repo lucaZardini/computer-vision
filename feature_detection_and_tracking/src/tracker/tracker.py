@@ -67,7 +67,6 @@ class LucasKanadeTracker(Tracker):
         out = None
         if self.save_video:
             fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
-            # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             frame_num = int(cap.get(cv2.CAP_PROP_FPS))
             frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
