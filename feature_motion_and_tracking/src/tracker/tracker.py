@@ -103,15 +103,13 @@ class LucasKanadeTracker(Tracker):
                 cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
             if self.save_video and out is not None:
                 out.write(frame_copy)
-            # cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
+            cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:
                 break
 
             frame_index += 1
-            if frame_index == 6:
-                cv2.imwrite(f"{self.detector.name()}.jpg", frame_copy)
-                break
+
         cap.release()
         cv2.destroyAllWindows()
 
