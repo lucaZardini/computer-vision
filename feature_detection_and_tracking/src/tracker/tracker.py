@@ -24,6 +24,7 @@ class Tracker:
         self.video = video
         self.online = online
         self.save_video = save_video
+        self._keypoints = None
 
     @property
     def file_with_keypoints_is_present(self) -> bool:
