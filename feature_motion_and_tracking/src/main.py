@@ -2,7 +2,7 @@ from manager import TrackManager
 
 
 def main():
-    TrackManager.track_video("../video/video.mp4", save_video=False)
+    TrackManager.track_video("../video/tennis.mp4", save_video=True)
 
 
 if __name__ == "__main__":

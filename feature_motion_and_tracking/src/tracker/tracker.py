@@ -66,8 +66,12 @@ class LucasKanadeTracker(Tracker):
         frame_index = 0
         out = None
         if self.save_video:
-            fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-            out = cv2.VideoWriter(f'{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, 20.0, (2160, 3840))
+            fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+            # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            frame_num = int(cap.get(cv2.CAP_PROP_FPS))
+            frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            out = cv2.VideoWriter(f'{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, frame_num, (frame_width, frame_height))
 
         while cap.isOpened():
 
@@ -91,6 +95,7 @@ class LucasKanadeTracker(Tracker):
                 features, status, err = self.tracking.track(frame)
 
             frame_copy = frame.copy()
+
             int_features = features.astype(int)
             for i, corner in enumerate(int_features):
                 x, y = corner.ravel()
@@ -98,13 +103,15 @@ class LucasKanadeTracker(Tracker):
                 cv2.circle(frame_copy, (x, y), 20, color, thickness=4)
             if self.save_video and out is not None:
                 out.write(frame_copy)
-            cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
+            # cv2.imshow(f'{self.detector.name()} and LK', frame_copy)
 
             if cv2.waitKey(1) == ord('q') or not ret:
                 break
 
             frame_index += 1
-
+            if frame_index == 6:
+                cv2.imwrite(f"{self.detector.name()}.jpg", frame_copy)
+                break
         cap.release()
         cv2.destroyAllWindows()
 
@@ -118,7 +125,7 @@ class KalmanFilterTracker(Tracker):
         out = None
         if self.save_video:
             fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-            out = cv2.VideoWriter(f'{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, 20.0, (2160, 3840))
+            out = cv2.VideoWriter(f'Tennis_{self.detector.name()}_{self.tracking.name()}.mp4', fourcc, 20.0, (2160, 3840))
 
         while cap.isOpened():
 

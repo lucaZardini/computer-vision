@@ -8,7 +8,7 @@ import cv2
 
 class FeatureDetectorAlgorithm(Enum):
     SIFT = "sift"
-    GOOD_FEATURES_TO_TRACK = "gff"
+    GOOD_FEATURES_TO_TRACK = "gftt"
     ORB = "orb"
     FAST = "fast"
     STAR = "star"

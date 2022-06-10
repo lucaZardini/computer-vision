@@ -55,7 +55,7 @@ if __name__ == "__main__":
         brief_keypoints.append(brief_keypoint)
 
     np.save('../../keypoints/sift.npy', sift_keypoints, allow_pickle=True)
-    np.save('../../keypoints/gff.npy', gff_keypoints, allow_pickle=True)
+    np.save('../../keypoints/gftt.npy', gff_keypoints, allow_pickle=True)
     np.save('../../keypoints/orb.npy', orb_keypoints, allow_pickle=True)
     np.save('../../keypoints/fast.npy', fast_keypoints, allow_pickle=True)
     np.save('../../keypoints/star.npy', brief_keypoints, allow_pickle=True)

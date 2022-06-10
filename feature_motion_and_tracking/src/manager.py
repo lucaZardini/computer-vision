@@ -17,5 +17,5 @@ class TrackManager:
                 trackers.append(TrackerBuilder.build(detector_algorithm=detect_algorithm, tracker_algorithm=track_algorithm, video=video_path, online=online, save_video=save_video))
 
         for tracker in trackers:
-            if tracker.detector.name() == FeatureDetectorAlgorithm.STAR.value and tracker.tracking.name() == FeatureTrackingAlgorithm.LK.value:
+            if tracker.tracking.name() == FeatureTrackingAlgorithm.LK.value:
                 tracker.track()
