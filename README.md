@@ -30,8 +30,13 @@ Two motion tracking algorithm has been developed:
 
 To run the project, start the main.py script. By default, it runs the feature detection algorithms implemented 
 with the Lucas Kanade Optical Flow tracking algorithm. To select only one method or to run the Kalman Filter tracker,
-open the manager.py script and change the line 20 according to your desire.
+open the `manager.py` script and change the line 20 according to your desire.
 The following is an example to select the ORB detector with the Kalman Filter tracker
 ```python
 if tracker.detector.name() == FeatureDetectorAlgorithm.ORB.value and tracker.tracking.name() == FeatureTrackingAlgorithm.KALMAN_FILTER.value:
 ```
+To run the project using the keypoints computed offline, you need to follow these steps:
+1. Run the `create_keypoints.py` script in the util package specifying your video
+2. Run the `main.py` script by setting the _online_ parameter to `False`.
+
+To save the video, set the _save_video_ flag to `True` in the `main.py` script and run it. 
